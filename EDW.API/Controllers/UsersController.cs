@@ -12,6 +12,8 @@ using Microsoft.Net.Http.Headers;
 using System.Security.Claims;
 using EDW.Application.Exceptions;
 using Microsoft.AspNetCore.Http;
+using EDW.API.Hubs;
+using Microsoft.AspNetCore.SignalR;
 
 namespace EDW.API.Controllers
 {
@@ -21,10 +23,12 @@ namespace EDW.API.Controllers
     public class UsersController : Controller
     {
         private readonly IMediator mediator;
+        private readonly IHubContext<ActivityHub, IActivityClient> activityHubContext;
 
-        public UsersController(IMediator mediator)
+        public UsersController(IMediator mediator, IHubContext<ActivityHub, IActivityClient> activityHubContext)
         {
             this.mediator = mediator;
+            this.activityHubContext = activityHubContext;
         }
 
         #region Gets
@@ -150,6 +154,11 @@ namespace EDW.API.Controllers
                 var username = claimsIdentity.FindFirst("Username")?.Value;
 
                 await mediator.Send(new UpdateUserActivityQuery(username, newActivityCode));
+
+                #region calling SignalR notification
+                await activityHubContext.Clients.All.ActivityChanged();
+                #endregion
+
                 return Ok();
             }
             catch (ActivityNotFoundException)

@@ -1,4 +1,5 @@
 ﻿using EDW.API.Encryption;
+using EDW.API.Hubs;
 using EDW.Application.Queries;
 using EDW.Domain;
 using EDW.Domain.Models;
@@ -147,6 +148,10 @@ namespace EDW.API
 
             services.AddScoped<IEncrypt, Sha512Encryption>();
             services.AddScoped<ITokenGenerator, TokenGenerator>();
+
+            #region SignalR
+            services.AddSignalR();
+            #endregion
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -189,6 +194,11 @@ namespace EDW.API
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "EDW Swagger Open API Documentation");
             });
             #endregion
+
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapHub<ActivityHub>("/activityhub");
+            });
         }
 
         private void AddTestData(AppDbContext context)
